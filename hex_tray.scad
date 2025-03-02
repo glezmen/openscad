@@ -10,6 +10,9 @@ bottom_thickness = 2;
 inner_height = 44;
 x_size = 180;
 y_size = 180;
+front_cutout_width = 120;
+front_cutout_height = 30;
+front_cutout_fillet = 10;
 
 hex_radius = hexagon_size / 2;
 hex_width = sqrt(3) * hex_radius;
@@ -60,6 +63,51 @@ module corners(size, height) {
     corner([x_size, y_size], [x_size, y_size - 2 * size], [x_size - 2 * size, y_size], height);
 }
 
+module front_cutout(shrink = 0) {
+    biw = bottom_thickness + inner_height;
+    radius = front_cutout_fillet - shrink;
+    height = front_cutout_height - shrink;
+    width = front_cutout_width - shrink * 2;
+
+    w1h = height - radius;
+    w2h = height;
+    
+    rotate([90, 0, 0]) {
+        translate([
+            x_size / 2 - width / 2  + radius,
+            biw - height + radius,
+            -wall_thickness / 2])
+        cylinder(h = wall_thickness, r = radius, center = true, $fn = 100);
+
+        translate([
+            x_size / 2 + width / 2 - radius,
+            biw - height + radius,
+            -wall_thickness / 2])
+        cylinder(h = wall_thickness, r = radius, center = true, $fn = 100);
+        
+        translate([
+            x_size / 2,
+            biw - w1h / 2,
+            -wall_thickness / 2])
+        cube([
+            width,
+            w1h ,
+            wall_thickness],
+            center = true);
+
+        translate([
+            x_size / 2,
+            biw - w2h / 2,
+            -wall_thickness / 2])
+        cube([
+            width - 2 * radius,
+            w2h,
+            wall_thickness],
+            center = true);
+
+    }
+}
+
 module sp(r) {
     sphere(r, $fn = 100);
 }
@@ -105,6 +153,8 @@ module hex_box() {
 
             translate([x_size, y_size, 0])
             sp(wall_thickness);
+            
+            //front_cutout();
         }
     }
 
@@ -148,7 +198,16 @@ module hex_box() {
     }
 }
 
-translate([-x_size / 2, -y_size / 2, 0])
-hex_box();
-
-
+translate([-x_size / 2, -y_size / 2, 0]) {
+    difference() {
+        hex_box();
+        
+        front_cutout();
+    }
+    
+    difference() {
+        front_cutout();
+        
+        front_cutout(wall_thickness);
+    }
+}
