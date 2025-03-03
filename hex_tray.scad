@@ -7,8 +7,8 @@ outer_width = 180;
 outer_length = 180;
 inner_height = 44;
 
-solid_bottom = true;
-lid = true;
+solid_bottom = false;
+lid = false;
 
 hexagon_size = 10;
 hexagon_spacing = 1;
@@ -23,6 +23,10 @@ front_cutout_fillet = 10;
 sign_plate_right_side = false;
 sign_plate_width = 50;
 sign_plate_height = 30;
+sign_text = "Sample|multiline text||here";
+sign_text_size = 4;
+
+include <BOSL2/std.scad>
 
 hex_radius = hexagon_size / 2;
 hex_width = sqrt(3) * hex_radius;
@@ -220,8 +224,19 @@ module sign_plate() {
     cposy = bottom_thickness + inner_height - sign_plate_height / 2;
 
     rotate([90, 0, 0])
-    translate([cposx - sign_plate_width / 2 , cposy - sign_plate_height / 2, -wall_thickness])
-    hex_panel(sign_plate_width, sign_plate_height, wall_thickness, true);
+    translate([cposx - sign_plate_width / 2 , cposy - sign_plate_height / 2, -wall_thickness]) {
+        hex_panel(sign_plate_width, sign_plate_height, wall_thickness, true);
+
+        result = [];
+        lines = str_split(sign_text, "|");
+        for (i = [0 : len(lines)-1]) {
+            color("red")
+            translate([sign_text_size, sign_plate_height - (i+1) * sign_text_size * 1.5, wall_thickness / 2])
+            linear_extrude(wall_thickness * 0.75)
+            text(lines[i], size=sign_text_size, font="DejaVu Sans");   
+        }
+    }
+
 }
 
 translate([-outer_width / 2, -outer_length / 2, 0]) {
