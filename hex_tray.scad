@@ -6,21 +6,27 @@
 outer_width = 180;
 outer_length = 180;
 inner_height = 44;
+
 solid_bottom = true;
 lid = true;
+
 hexagon_size = 10;
 hexagon_spacing = 1;
+
 wall_thickness = 2;
 bottom_thickness = 2;
-front_cutout_width = 120;
+
+front_cutout_width = 60;
 front_cutout_height = 30;
 front_cutout_fillet = 10;
+
+sign_plate_right_side = false;
+sign_plate_width = 50;
+sign_plate_height = 30;
 
 hex_radius = hexagon_size / 2;
 hex_width = sqrt(3) * hex_radius;
 raster_spacing = hex_width + hexagon_spacing;
-x_size = outer_width;
-y_size = outer_length;
 
 module hexagon_cutout() {
         circle(hex_radius, $fn=6);
@@ -64,9 +70,9 @@ module corner(p1, p2, p3, height) {
 
 module corners(size, height) {
     corner([0, 0], [0, 2 * size], [2 * size, 0], height);
-    corner([x_size, 0], [x_size, 2 * size], [x_size - 2 * size, 0], height);
-    corner([0, y_size], [0, y_size - 2 * size], [2 * size, y_size], height);
-    corner([x_size, y_size], [x_size, y_size - 2 * size], [x_size - 2 * size, y_size], height);
+    corner([outer_width, 0], [outer_width, 2 * size], [outer_width - 2 * size, 0], height);
+    corner([0, outer_length], [0, outer_length - 2 * size], [2 * size, outer_length], height);
+    corner([outer_width, outer_length], [outer_width, outer_length - 2 * size], [outer_width - 2 * size, outer_length], height);
 }
 
 module front_cutout(shrink = 0) {
@@ -80,19 +86,19 @@ module front_cutout(shrink = 0) {
     
     rotate([90, 0, 0]) {
         translate([
-            x_size / 2 - width / 2  + radius,
+            outer_width / 2 - width / 2  + radius,
             biw - height + radius,
             -wall_thickness / 2])
         cylinder(h = wall_thickness, r = radius, center = true, $fn = 100);
 
         translate([
-            x_size / 2 + width / 2 - radius,
+            outer_width / 2 + width / 2 - radius,
             biw - height + radius,
             -wall_thickness / 2])
         cylinder(h = wall_thickness, r = radius, center = true, $fn = 100);
         
         translate([
-            x_size / 2,
+            outer_width / 2,
             biw - w1h / 2,
             -wall_thickness / 2])
         cube([
@@ -102,7 +108,7 @@ module front_cutout(shrink = 0) {
             center = true);
 
         translate([
-            x_size / 2,
+            outer_width / 2,
             biw - w2h / 2,
             -wall_thickness / 2])
         cube([
@@ -122,13 +128,13 @@ module hold_pins() {
     union() {
     sp(wall_thickness);
 
-    translate([x_size, 0, 0])
+    translate([outer_width, 0, 0])
     sp(wall_thickness);
 
-    translate([0, y_size, 0])
+    translate([0, outer_length, 0])
     sp(wall_thickness);
 
-    translate([x_size, y_size, 0])
+    translate([outer_width, outer_length, 0])
     sp(wall_thickness); 
     }
 }
@@ -136,30 +142,30 @@ module hold_pins() {
 module hex_box() {
     difference() {
         union() {
-            hex_panel(x_size, y_size, bottom_thickness, solid_bottom);
+            hex_panel(outer_width, outer_length, bottom_thickness, solid_bottom);
 
             translate([0, wall_thickness, bottom_thickness])
             rotate([90, 0, 0])
-            hex_panel(x_size, inner_height, wall_thickness);
+            hex_panel(outer_width, inner_height, wall_thickness);
 
-            translate([0, y_size, bottom_thickness])    
+            translate([0, outer_length, bottom_thickness])    
             rotate([90, 0, 0])
-            hex_panel(x_size, inner_height, wall_thickness);
+            hex_panel(outer_width, inner_height, wall_thickness);
 
             translate([wall_thickness, 0, bottom_thickness])
             rotate([0, -90, 0])
-            hex_panel(inner_height, y_size, wall_thickness);
+            hex_panel(inner_height, outer_length, wall_thickness);
 
-            translate([x_size, 0, bottom_thickness])
+            translate([outer_width, 0, bottom_thickness])
             rotate([0, -90, 0])
-            hex_panel(inner_height, y_size, wall_thickness);
+            hex_panel(inner_height, outer_length, wall_thickness);
 
             linear_extrude(bottom_thickness)
             difference() {
-                square([x_size, y_size]);
+                square([outer_width, outer_length]);
                 
                 translate([wall_thickness * 2, wall_thickness * 2])
-                square([x_size - wall_thickness * 4, y_size - wall_thickness * 4]);
+                square([outer_width - wall_thickness * 4, outer_length - wall_thickness * 4]);
             }
         }
 
@@ -180,32 +186,45 @@ module hex_box() {
         }
 
         intersection() {
-            translate([x_size - w, w, top + w])
+            translate([outer_width - w, w, top + w])
             cube(wall_thickness, center = true);
 
-            translate([x_size, 0, top])
+            translate([outer_width, 0, top])
             sp(wall_thickness - gap);
         }
 
         intersection() {
-            translate([w, y_size - w, top + w])
+            translate([w, outer_length - w, top + w])
             cube(wall_thickness, center = true);
 
-            translate([0, y_size, top])
+            translate([0, outer_length, top])
             sp(wall_thickness - gap);
         }
 
         intersection() {
-            translate([x_size - w, y_size - w, top + w])
+            translate([outer_width - w, outer_length - w, top + w])
             cube(wall_thickness, center = true);
 
-            translate([x_size, y_size, top])
+            translate([outer_width, outer_length, top])
             sp(wall_thickness - gap);
         }
     }
 }
 
-translate([-x_size / 2, -y_size / 2, 0]) {
+module sign_plate() {
+    cposx =
+        sign_plate_right_side
+        ? outer_width - (outer_width - front_cutout_width) / 4
+        : (outer_width - front_cutout_width) / 4;
+
+    cposy = bottom_thickness + inner_height - sign_plate_height / 2;
+
+    rotate([90, 0, 0])
+    translate([cposx - sign_plate_width / 2 , cposy - sign_plate_height / 2, -wall_thickness])
+    hex_panel(sign_plate_width, sign_plate_height, wall_thickness, true);
+}
+
+translate([-outer_width / 2, -outer_length / 2, 0]) {
     difference() {
         hex_box();
         
@@ -217,12 +236,15 @@ translate([-x_size / 2, -y_size / 2, 0]) {
         
         front_cutout(wall_thickness);
     }
+
     if (lid) {
-        translate([x_size + 10, 0, 0])
+        translate([outer_width + 10, 0, 0])
         difference() {
-            hex_panel(x_size, y_size, bottom_thickness, solid_bottom);
+            hex_panel(outer_width, outer_length, bottom_thickness, solid_bottom);
 
             hold_pins();
         }
     }
+
+    sign_plate();
 }
