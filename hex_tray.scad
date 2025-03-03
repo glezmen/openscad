@@ -3,13 +3,14 @@
  Designer by Norbert Bokor (glezmen@gmail.com)
 */
 
+outer_width = 180;
+outer_length = 180;
+inner_height = 44;
+solid_bottom = true;
 hexagon_size = 10;
 hexagon_spacing = 1;
 wall_thickness = 2;
 bottom_thickness = 2;
-inner_height = 44;
-x_size = 180;
-y_size = 180;
 front_cutout_width = 120;
 front_cutout_height = 30;
 front_cutout_fillet = 10;
@@ -17,21 +18,25 @@ front_cutout_fillet = 10;
 hex_radius = hexagon_size / 2;
 hex_width = sqrt(3) * hex_radius;
 raster_spacing = hex_width + hexagon_spacing;
+x_size = outer_width;
+y_size = outer_length;
 
 module hexagon_cutout() {
         circle(hex_radius, $fn=6);
 }
  
-module hex_grid(size_x, size_y) {
+module hex_grid(size_x, size_y, solid = false) {
     difference(){
         square([size_x, size_y]);
         
-        for (x = [-hex_radius : raster_spacing - 1 : size_x + hex_radius]) {
-            for (y = [-hex_radius : raster_spacing : size_y + hex_radius]) {
-                translate(
-                    [x,
-                    y + (((x / raster_spacing) % 2) * raster_spacing / 2)])
-                    hexagon_cutout();
+        if (!solid) {
+            for (x = [-hex_radius : raster_spacing - 1 : size_x + hex_radius]) {
+                for (y = [-hex_radius : raster_spacing : size_y + hex_radius]) {
+                    translate(
+                        [x,
+                        y + (((x / raster_spacing) % 2) * raster_spacing / 2)])
+                        hexagon_cutout();
+                }
             }
         }
     }
@@ -44,9 +49,9 @@ module hex_grid(size_x, size_y) {
     }
 }
 
-module hex_panel(size_x, size_y, thickness) {
+module hex_panel(size_x, size_y, thickness, solid = false) {
     linear_extrude(thickness)
-    hex_grid(size_x, size_y);
+    hex_grid(size_x, size_y, solid);
 }
 
 module corner(p1, p2, p3, height) {
@@ -115,7 +120,7 @@ module sp(r) {
 module hex_box() {
     difference() {
         union() {
-            hex_panel(x_size, y_size, bottom_thickness);
+            hex_panel(x_size, y_size, bottom_thickness, solid_bottom);
 
             translate([0, wall_thickness, bottom_thickness])
             rotate([90, 0, 0])
@@ -152,13 +157,10 @@ module hex_box() {
             sp(wall_thickness);
 
             translate([x_size, y_size, 0])
-            sp(wall_thickness);
-            
-            //front_cutout();
+            sp(wall_thickness);            
         }
     }
 
-    
     top = inner_height + bottom_thickness;
     w = wall_thickness / 2;
     gap = 0.2;
