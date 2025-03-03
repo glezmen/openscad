@@ -7,6 +7,7 @@ outer_width = 180;
 outer_length = 180;
 inner_height = 44;
 solid_bottom = true;
+lid = true;
 hexagon_size = 10;
 hexagon_spacing = 1;
 wall_thickness = 2;
@@ -117,6 +118,21 @@ module sp(r) {
     sphere(r, $fn = 100);
 }
 
+module hold_pins() {
+    union() {
+    sp(wall_thickness);
+
+    translate([x_size, 0, 0])
+    sp(wall_thickness);
+
+    translate([0, y_size, 0])
+    sp(wall_thickness);
+
+    translate([x_size, y_size, 0])
+    sp(wall_thickness); 
+    }
+}
+
 module hex_box() {
     difference() {
         union() {
@@ -147,18 +163,7 @@ module hex_box() {
             }
         }
 
-        union() {
-            sp(wall_thickness);
-
-            translate([x_size, 0, 0])
-            sp(wall_thickness);
-
-            translate([0, y_size, 0])
-            sp(wall_thickness);
-
-            translate([x_size, y_size, 0])
-            sp(wall_thickness);            
-        }
+        hold_pins();
     }
 
     top = inner_height + bottom_thickness;
@@ -211,5 +216,13 @@ translate([-x_size / 2, -y_size / 2, 0]) {
         front_cutout();
         
         front_cutout(wall_thickness);
+    }
+    if (lid) {
+        translate([x_size + 10, 0, 0])
+        difference() {
+            hex_panel(x_size, y_size, bottom_thickness, solid_bottom);
+
+            hold_pins();
+        }
     }
 }
