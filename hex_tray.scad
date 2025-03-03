@@ -3,28 +3,50 @@
  Designer by Norbert Bokor (glezmen@gmail.com)
 */
 
+// mm
 outer_width = 180;
+// mm
 outer_length = 180;
+// mm, without bottom
 inner_height = 44;
 
+// solid, not grid
 solid_bottom = false;
-lid = false;
+// matches style of bottom
+generate_lid = false;
 
+// diameter in mm
 hexagon_size = 10;
+// mm
 hexagon_spacing = 1;
 
+// mm
 wall_thickness = 2;
+// mm
 bottom_thickness = 2;
 
+//-----------------
+/* [Front cutout] */ 
+
+// mm
 front_cutout_width = 60;
+// mm
 front_cutout_height = 30;
+// fillet radius in mm
 front_cutout_fillet = 10;
 
-sign_plate_right_side = false;
-sign_plate_width = 50;
-sign_plate_height = 30;
-sign_text = "Sample|multiline text||here";
-sign_text_size = 4;
+//-----------------
+/* [Label] */ 
+
+label_position = "top left"; // [top left: top right:bottom left:bottom right:bottom center:center:under cutout]
+// mm
+label_width = 50;
+// mm
+label_height = 30;
+// use | as line separator, || for empty line
+label_text = "Sample|multiline text||here";
+// letter height in mm
+label_text_size = 4;
 
 include <BOSL2/std.scad>
 
@@ -215,28 +237,41 @@ module hex_box() {
     }
 }
 
-module sign_plate() {
-    cposx =
-        sign_plate_right_side
-        ? outer_width - (outer_width - front_cutout_width) / 4
-        : (outer_width - front_cutout_width) / 4;
+module label() {
+    xl = (outer_width - front_cutout_width) / 4;
+    xr = outer_width - (outer_width - front_cutout_width) / 4;
+    yt = bottom_thickness + inner_height - label_height / 2;
+    yb = bottom_thickness + label_height / 2 + wall_thickness;
 
-    cposy = bottom_thickness + inner_height - sign_plate_height / 2;
+    pos = [
+        ["top left", xl, yt],
+        ["top right", xr, yt],    
+        ["bottom left", xl, yb],
+        ["bottom right", xr, yb],
+        ["bottom center", (xl + xr) / 2, yb],
+        ["center", (xl + xr) / 2, bottom_thickness + (inner_height - front_cutout_height) / 2],
+        ["under cutout",
+            (xl + xr) / 2,
+            bottom_thickness + inner_height + wall_thickness - front_cutout_height - label_height / 2],
+    ];
+
+    idx = search([label_position], pos)[0];
+    cposx = pos[idx][1];
+    cposy = pos[idx][2];
 
     rotate([90, 0, 0])
-    translate([cposx - sign_plate_width / 2 , cposy - sign_plate_height / 2, -wall_thickness]) {
-        hex_panel(sign_plate_width, sign_plate_height, wall_thickness, true);
+    translate([cposx - label_width / 2 , cposy - label_height / 2, -wall_thickness]) {
+        hex_panel(label_width, label_height, wall_thickness, true);
 
         result = [];
-        lines = str_split(sign_text, "|");
+        lines = str_split(label_text, "|");
         for (i = [0 : len(lines)-1]) {
             color("red")
-            translate([sign_text_size, sign_plate_height - (i+1) * sign_text_size * 1.5, wall_thickness / 2])
+            translate([label_text_size, label_height - (i+1) * label_text_size * 1.5, wall_thickness / 2])
             linear_extrude(wall_thickness * 0.75)
-            text(lines[i], size=sign_text_size, font="DejaVu Sans");   
+            text(lines[i], size=label_text_size, font="DejaVu Sans");   
         }
     }
-
 }
 
 translate([-outer_width / 2, -outer_length / 2, 0]) {
@@ -252,7 +287,7 @@ translate([-outer_width / 2, -outer_length / 2, 0]) {
         front_cutout(wall_thickness);
     }
 
-    if (lid) {
+    if (generate_lid) {
         translate([outer_width + 10, 0, 0])
         difference() {
             hex_panel(outer_width, outer_length, bottom_thickness, solid_bottom);
@@ -261,5 +296,6 @@ translate([-outer_width / 2, -outer_length / 2, 0]) {
         }
     }
 
-    sign_plate();
+    label();
 }
+
