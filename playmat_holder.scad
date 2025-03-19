@@ -14,6 +14,8 @@ screw_size = 5;
 // width of screwing strip in mm
 strip_width = 20;
 
+// move strips if necessary for the screw holes to be aligned
+align_holes = true;
 strip_top = true;
 strip_center = false;
 strip_bottom = true;
@@ -22,6 +24,10 @@ strip_right = true;
 
 inner_radius = inner_diameter/2;
 outer_radius = inner_radius + wall_thickness;
+
+hole_step = (inner_diameter + wall_thickness) / 2;
+aligning_pos = hole_step * round((height - strip_width) / hole_step - 0.5);
+top_strip_pos = align_holes ? aligning_pos : height - strip_width;
 
 $fn = 100;
 
@@ -111,7 +117,7 @@ difference()
             }
 
             if (strip_top) {
-                translate([0, 0, height - strip_width])
+                translate([0, 0, top_strip_pos])
                 screw_strip();
             }
 
@@ -136,7 +142,7 @@ difference()
     }
 
     if (strip_top) {
-        translate([0, 0, height - strip_width])
+        translate([0, 0, top_strip_pos])
         deep_screw(screw_size, 2);
     }
 
@@ -159,3 +165,4 @@ difference()
     }
 
 }
+
