@@ -14,9 +14,12 @@ screw_size = 5;
 // width of screwing strip in mm
 strip_width = 20;
 
+// Close end of tubes
+close_end = false;
+
 // move strips if necessary for the screw holes to be aligned
 align_holes = true;
-strip_top = true;
+strip_top = false;
 strip_center = false;
 strip_bottom = true;
 strip_left = true;
@@ -163,6 +166,31 @@ difference()
         rotate([0, -90, 0])
         deep_screw(screw_size, 2);
     }
-
 }
 
+module end_stop() {
+    count = round(inner_diameter / (square_size + grid_thickness));
+
+    difference() {
+        cylinder(h = grid_thickness, r = outer_radius);
+
+        union () {
+            rotate([0, 0, 45])
+            linear_extrude(height=grid_thickness, center=false)
+            for (x = [0 : count]) {
+                for (y = [0 : count]) {
+                    translate([-inner_radius + x * (square_size + grid_thickness),
+                    -inner_radius + y * (square_size + grid_thickness), 0])
+                    square([square_size, square_size], center = true);
+                }
+            }
+        }
+    }
+}
+
+if (close_end) {
+    for (i = [1 : tube_count]) {
+        translate([(i-1) * (inner_diameter + wall_thickness), 0, 0])
+        end_stop();
+    }
+}
