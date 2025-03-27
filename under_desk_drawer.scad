@@ -13,7 +13,7 @@ height = 40;
 front_wall = "handle"; // [handle:connector:none:wall]
 
 // Back wall
-back_wall = "wall"; // [end:connector:none]
+back_wall = "wall"; // [wall:connector:none]
 
 // Left wall
 left_wall = "rail"; // [rail:connector:none]
@@ -40,7 +40,7 @@ screw_holes = 2;
 connector_count = 3;
 
 // mm
-connector_gap = 0.15;
+connector_gap = 0.1;
 
 // label
 
@@ -85,13 +85,45 @@ module hex_panel(size_x, size_y, thickness, solid = false) {
     hex_grid(size_x, size_y, solid);
 }
 
-module siderail(length, shrink = 0) {
+module dove_polygon(dx = 3, dy = 5, shrink = 0) {
+    polygon([[-(dx-shrink), 0], [(dx-shrink), 0], [(dy-shrink), -(dy-shrink)], [-(dy -shrink), -(dy - shrink)]]);
+}
+
+module dove_tail(up = false, shrink = 0) {
+    translate([0, 0, up ? thickness / 2 : 0])
+    linear_extrude(thickness / 2)
+    dove_polygon(3, 5, shrink);
+}
+
+module side_connector(shrink = 0) {
+    thick = rail_thickness / 5;
+    dx = 2;
+    dy = 4;
+    
+    translate([0, -dy, height])
+    intersection() {
+        rotate([-90, 0, 0])
+        linear_extrude(length)
+        polygon([
+            [0, 0], [-(rail_thickness - shrink), 0], [0, rail_thickness - shrink]
+        ]);
+        
+        translate([-dx, dy, -thick])
+        linear_extrude(thick)
+        dove_polygon(dx, dy, shrink);
+    }
+
+}
+
+module siderail(length, shrink = 0, position = "none") {
     translate([0, 0, height])
-    rotate([-90, 0, 0])
-    linear_extrude(length)
-    polygon([
-        [0, 0], [-(rail_thickness - shrink), 0], [0, rail_thickness - shrink]
-    ]);
+    union() {
+        rotate([-90, 0, 0])
+        linear_extrude(length)
+        polygon([
+            [0, 0], [-(rail_thickness - shrink), 0], [0, rail_thickness - shrink]
+        ]);
+    }
 }
 
 module screw_hole() {
@@ -130,12 +162,6 @@ module rail() {
     }
 }
 
-module dove_tail(up = false, shrink = 0) {
-    translate([0, 0, up ? thickness / 2 : 0])
-    linear_extrude(thickness / 2)
-    polygon([[-(3-shrink), 0], [(3-shrink), 0], [(5-shrink), -(5-shrink)], [-(5-shrink), -(5-shrink)]]);
-}
-
 module connector(length, shrink = 0) {
     step = length / (2 * connector_count);
     for (i = [1 : connector_count]) {
@@ -158,7 +184,7 @@ module invert_connectors() {
     }
 
     if (back_wall == "connector") {
-    translate([0, length, 0])
+        translate([0, length, 0])
         connector(width, -connector_gap);
     }
 }
@@ -175,36 +201,62 @@ difference() {
             translate([0, length - 5, 0])
             cube([width, 5, thickness], center = false);
         }
-
     }
 
-    color("red")    
     invert_connectors();
 }
 
 // left
-if (left_wall == "rail") {
-    siderail(length, 1);
+difference() {
+    union() {
+        if (left_wall == "rail") {
+            siderail(length, 1, "left");
+            
+            translate([thickness, 0, 0])
+            rotate([0, 270, 0])
+            hex_panel(height, length, thickness);
+            
+            if (front_wall == "connector") {
+                side_connector(connector_gap);
+            }
+        }
+    }
     
-    translate([thickness, 0, 0])
-    rotate([0, 270, 0])
-    hex_panel(height, length, thickness);
+    if (back_wall == "connector") {
+        translate([0, length, 0])
+        side_connector();
+    }
 }
 
 // right
-if (right_wall == "rail") {
-    translate([width, 0, 0])
-    mirror([1, 0, 0])
-    siderail(length, 1);
+difference() {
+    union() {
+        if (right_wall == "rail") {
+            translate([width, 0, 0])
+            mirror([1, 0, 0])
+            siderail(length, 1, "right");
+            
+            translate([width, 0, 0])
+            rotate([0, -90, 0])
+            hex_panel(height, length, thickness);
+            
+            if (front_wall == "connector") {
+                translate([width, 0, 0])
+                mirror([1, 0, 0])
+                side_connector(connector_gap);
+            }
+        } else if (right_wall == "connector") {
+            translate([width, 0, 0])
+            rotate([0, 0, 90])
+            connector(length);
+        }
+    }
     
-    translate([width, 0, 0])
-    rotate([0, -90, 0])
-    hex_panel(height, length, thickness);
-} else if (right_wall == "connector") {
-    color("red")
-    translate([width, 0, 0])
-    rotate([0, 0, 90])
-    connector(length);
+    if (back_wall == "connector") {
+        translate([width, length, 0])
+        mirror([1, 0, 0])
+        side_connector();
+    }
 }
 
 // back
