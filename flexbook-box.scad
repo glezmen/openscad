@@ -84,12 +84,13 @@ module slit(length, width = flex_slit, thickness = flex_thickness) {
 
 module fold() {
     l = outer_height / slit_divider;
+    fc = (fold_diameter + cover_thickness + tolerance * 2) * PI / 2;
     
     difference() {
-        translate([-c, 0, 0])
-        cube([c, outer_height, flex_thickness]);
+        translate([-fc, 0, 0])
+        cube([fc, outer_height, flex_thickness]);
         
-        for (i = [0 : c / flex_slit / 2]) {
+        for (i = [0 : fc / flex_slit / 2]) {
             for (j = [0 : slit_divider]) {
                 translate([-i * flex_slit * 2, flex_slit + j * l + (i % 2 == 0 ? -l / 2 : 0), 0])
                 slit(l - flex_slit * 2);
@@ -107,7 +108,6 @@ module cover() {
         difference() {
             cube([outer_width, outer_height, cover_thickness]);
             
-            color("red")
             for (i = [0 : len(lines) - 1]) {
                 translate([outer_width / 8, 2 * outer_height / 3 - i * text_size * 1.5, cover_thickness / 2])
                 linear_extrude(cover_thickness / 2)
