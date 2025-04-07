@@ -13,7 +13,7 @@ height = 40;
 front_wall = "handle"; // [handle:connector:none:wall]
 
 // Back wall
-back_wall = "wall"; // [end:connector:none]
+back_wall = "wall"; // [wall:connector:none]
 
 // Left wall
 left_wall = "rail"; // [rail:connector:none]
