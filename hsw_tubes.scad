@@ -11,6 +11,9 @@ square_size = 8;
 // grid thickness in mm
 grid_thickness = 3;
 
+// bottom plate
+bottom_plate = true;
+
 // additional connector for stronger connection
 wider_connection = false;
 
@@ -34,48 +37,51 @@ $fn = 100;
 
 /* functions*/
 module diamond_tube() {
-    square_diagonal = sqrt(square_size * square_size * 2);
-    spacing = square_diagonal + grid_thickness;
-    outer_circumference = outer_radius * 2 * PI;
-    steps = round(outer_circumference / spacing);
-    angle_step = 360 / steps;
-    
-    difference() {
-        cylinder(h = height, r = outer_radius);
+	square_diagonal = sqrt(square_size * square_size * 2);
+	spacing = square_diagonal + grid_thickness;
+	outer_circumference = outer_radius * 2 * PI;
+	steps = round(outer_circumference / spacing);
+	angle_step = 360 / steps;
 
-        cylinder(h = height + 1, r = inner_radius);
+	difference() {
+		cylinder(h = height, r = outer_radius);
 
-        // Square pattern
-        union() {
-        for (pattern = [0 : 1]) {
-            for (z = [0 : square_diagonal + grid_thickness : height]) {
-                for (angle = [angle_step/2 * pattern : angle_step : 360]) {
-                    rotate([0, 0, angle])
-                    translate([inner_radius + (outer_radius - inner_radius) / 2, 0, z + spacing /2 * pattern])
-                    rotate([0, 90])
-                    rotate([0, 0, 45])
-                    linear_extrude(height=wall_thickness*3, center=true)
-                    square([square_size, square_size], center = true);
-                }
-            }
-        }
-        }
-    }
+		cylinder(h = height + 1, r = inner_radius);
 
-    difference() {
-        union() {
-            translate([0, 0, height - grid_thickness])
-            cylinder(h = grid_thickness, r = outer_radius);
+		// Square pattern
+		union() {
+			for (pattern = [0 : 1]) {
+				for (z = [0 : square_diagonal + grid_thickness : height]) {
+					for (angle = [angle_step/2 * pattern : angle_step : 360]) {
+						rotate([0, 0, angle])
+							translate([inner_radius + (outer_radius - inner_radius) / 2, 0, z + spacing /2 * pattern])
+							rotate([0, 90])
+							rotate([0, 0, 45])
+							linear_extrude(height=wall_thickness*3, center=true)
+							square([square_size, square_size], center = true);
+					}
+				}
+			}
+		}
+	}
 
-            cylinder(h = grid_thickness, r = outer_radius);
-        }
-        
-        translate([0,0, -1])
-        cylinder(h = height + 2, r = inner_radius);
-    }
-    
-    cylinder(h = wall_thickness, r = outer_radius);
+	difference() {
+		union() {
+			translate([0, 0, height - grid_thickness])
+				cylinder(h = grid_thickness, r = outer_radius);
+
+			cylinder(h = grid_thickness, r = outer_radius);
+		}
+
+		translate([0,0, -1])
+			cylinder(h = height + 2, r = inner_radius);
+	}
+
+	if (bottom_plate) {
+		cylinder(h = wall_thickness, r = outer_radius);
+	}
 }
+
 function hexagon(radius) = [
     for (i = [0:5])
         [radius * cos(i * 60), radius * sin(i * 60)]
